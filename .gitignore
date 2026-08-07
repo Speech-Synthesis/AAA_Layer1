@@ -1,0 +1,53 @@
+# ============================================================
+# AAA Engine - .gitignore
+# ============================================================
+
+# ── Python ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ── Virtual Environments ────────────────────────────────────
+.venv/
+venv/
+ENV/
+
+# ── Model Checkpoints & Weights (too large for GitHub) ──────
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.onnx
+
+# ── Training Results & Outputs ──────────────────────────────
+aaa_engine/results/
+checkpoints/
+logs/
+
+# ── Pretrained Model Weights ────────────────────────────────
+aaa_engine/pretrained_models/spkrec-ecapa-voxceleb/
+aaa_engine/pretrained_models/ecapa-tdnn-custom/*.ckpt
+
+# ── Data ────────────────────────────────────────────────────
+data/
+aaa_engine/sample_dataset/
+
+# ── IDE & OS ────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+Thumbs.db
+.DS_Store
+
+# ── Pytest ──────────────────────────────────────────────────
+.pytest_cache/
+
+# ── Misc ────────────────────────────────────────────────────
+*.log

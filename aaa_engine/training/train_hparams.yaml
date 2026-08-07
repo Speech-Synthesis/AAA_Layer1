@@ -1,0 +1,141 @@
+# =============================================================
+# training/train_hparams.yaml
+# AAA Engine — ECAPA-TDNN Training Hyperparameters
+# =============================================================
+# Adapted from SpeechBrain's official VoxCeleb recipe:
+#   recipes/VoxCeleb/SpeakerRec/hparams/train_ecapa_tdnn.yaml
+#
+# Key differences from the official recipe:
+#   - Smaller batch size (8 vs 32) for CPU training
+#   - Lower learning rate (0.0001) for fine-tuning
+#   - Fewer epochs (5) for the small sample dataset
+#   - No data augmentation (disabled for tiny dataset)
+#   - 20 output neurons (matching our 20 sample speakers)
+#   - Pretrained model loading from VoxCeleb checkpoint
+# =============================================================
+
+# ── Basic Parameters ─────────────────────────────────────────
+seed: 1986
+__set_seed: !apply:torch.manual_seed [!ref <seed>]
+output_folder: !ref results/ecapa_sample/<seed>
+save_folder: !ref <output_folder>/save
+train_log: !ref <output_folder>/train_log.txt
+
+# ── Data Files ───────────────────────────────────────────────
+data_folder: !PLACEHOLDER  # Set via command line: --data_folder=../sample_dataset
+train_annotation: !ref <save_folder>/train.csv
+valid_annotation: !ref <save_folder>/dev.csv
+
+split_ratio: [70, 15, 15]
+skip_prep: False
+ckpt_interval_minutes: 15
+
+# ── Training Parameters ─────────────────────────────────────
+number_of_epochs: 5
+batch_size: 8
+lr: 0.0001
+base_lr: 0.00000001
+max_lr: !ref <lr>
+step_size: 2000
+sample_rate: 16000
+sentence_len: 3.0
+shuffle: True
+random_chunk: False
+
+# ── Feature Parameters ───────────────────────────────────────
+n_mels: 80
+left_frames: 0
+right_frames: 0
+deltas: False
+
+# ── Number of Speakers (output classes) ──────────────────────
+# Must match the number of speakers in your training dataset
+# 20 for our sample dataset; change to your speaker count for real data
+out_n_neurons: 20
+
+# ── Pretrained Model (for fine-tuning) ───────────────────────
+pretrained_path: speechbrain/spkrec-ecapa-voxceleb
+
+# ── DataLoader ───────────────────────────────────────────────
+num_workers: 0
+dataloader_options:
+    batch_size: !ref <batch_size>
+    shuffle: !ref <shuffle>
+    num_workers: !ref <num_workers>
+
+# ── Model Components ─────────────────────────────────────────
+compute_features: !new:speechbrain.lobes.features.Fbank
+    n_mels: !ref <n_mels>
+    left_frames: !ref <left_frames>
+    right_frames: !ref <right_frames>
+    deltas: !ref <deltas>
+
+embedding_model: !new:speechbrain.lobes.models.ECAPA_TDNN.ECAPA_TDNN
+    input_size: !ref <n_mels>
+    channels: [1024, 1024, 1024, 1024, 3072]
+    kernel_sizes: [5, 3, 3, 3, 1]
+    dilations: [1, 2, 3, 4, 1]
+    groups: [1, 1, 1, 1, 1]
+    attention_channels: 128
+    lin_neurons: 192
+
+classifier: !new:speechbrain.lobes.models.ECAPA_TDNN.Classifier
+    input_size: 192
+    out_neurons: !ref <out_n_neurons>
+
+epoch_counter: !new:speechbrain.utils.epoch_loop.EpochCounter
+    limit: !ref <number_of_epochs>
+
+# ── Normalization ────────────────────────────────────────────
+mean_var_norm: !new:speechbrain.processing.features.InputNormalization
+    norm_type: sentence
+    std_norm: False
+
+# ── Module Registry ──────────────────────────────────────────
+modules:
+    compute_features: !ref <compute_features>
+    embedding_model: !ref <embedding_model>
+    classifier: !ref <classifier>
+    mean_var_norm: !ref <mean_var_norm>
+
+# ── Loss Function ────────────────────────────────────────────
+# Additive Angular Margin Softmax (AAM-Softmax)
+# This loss encourages the model to produce discriminative embeddings
+compute_cost: !new:speechbrain.nnet.losses.LogSoftmaxWrapper
+    loss_fn: !new:speechbrain.nnet.losses.AdditiveAngularMargin
+        margin: 0.2
+        scale: 30
+
+# ── Optimizer ────────────────────────────────────────────────
+opt_class: !name:torch.optim.Adam
+    lr: !ref <lr>
+    weight_decay: 0.000002
+
+# ── Learning Rate Scheduler ─────────────────────────────────
+lr_annealing: !new:speechbrain.nnet.schedulers.CyclicLRScheduler
+    base_lr: !ref <base_lr>
+    max_lr: !ref <max_lr>
+    step_size: !ref <step_size>
+
+# ── Logging ──────────────────────────────────────────────────
+train_logger: !new:speechbrain.utils.train_logger.FileTrainLogger
+    save_file: !ref <train_log>
+
+error_stats: !name:speechbrain.utils.metric_stats.MetricStats
+    metric: !name:speechbrain.nnet.losses.classification_error
+        reduction: batch
+
+# ── Checkpointing ────────────────────────────────────────────
+checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
+    checkpoints_dir: !ref <save_folder>
+    recoverables:
+        embedding_model: !ref <embedding_model>
+        classifier: !ref <classifier>
+        normalizer: !ref <mean_var_norm>
+        counter: !ref <epoch_counter>
+        lr_annealing: !ref <lr_annealing>
+
+# ── Pretrainer ───────────────────────────────────────────────
+# Pre-trained weight loading is handled in train_ecapa.py directly
+# to provide better error handling and compatibility across
+# SpeechBrain versions.

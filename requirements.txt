@@ -1,0 +1,12 @@
+speechbrain
+torch
+torchaudio
+numpy
+psycopg2-binary
+librosa
+soundfile
+scipy
+fastapi
+uvicorn
+python-multipart
+hyperpyyaml

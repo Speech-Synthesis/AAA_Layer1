@@ -1,0 +1,55 @@
+{
+    "project": "AAA Engine - ECAPA-TDNN Speaker Verification",
+    "description": "Training configuration for HPC deployment",
+
+    "training": {
+        "seed": 1986,
+        "number_of_epochs": 20,
+        "batch_size": 32,
+        "learning_rate": 0.001,
+        "base_lr": 0.00000001,
+        "weight_decay": 0.000002,
+        "lr_scheduler_step_size": 65000,
+        "sentence_len": 3.0,
+        "sample_rate": 16000,
+        "random_chunk": true,
+        "shuffle": true,
+        "num_workers": 4
+    },
+
+    "model": {
+        "architecture": "ECAPA-TDNN",
+        "n_mels": 80,
+        "channels": [1024, 1024, 1024, 1024, 3072],
+        "kernel_sizes": [5, 3, 3, 3, 1],
+        "dilations": [1, 2, 3, 4, 1],
+        "attention_channels": 128,
+        "lin_neurons": 192,
+        "pretrained_source": "speechbrain/spkrec-ecapa-voxceleb"
+    },
+
+    "loss": {
+        "type": "AAM-Softmax",
+        "margin": 0.2,
+        "scale": 30
+    },
+
+    "data": {
+        "data_folder": "../data",
+        "split_ratio": [80, 10, 10],
+        "out_n_neurons": 20
+    },
+
+    "paths": {
+        "output_folder": "results/ecapa_hpc",
+        "checkpoint_dir": "../checkpoints",
+        "log_dir": "../logs"
+    },
+
+    "hpc": {
+        "mixed_precision": true,
+        "gradient_accumulation_steps": 1,
+        "checkpoint_interval_minutes": 15,
+        "graceful_shutdown": true
+    }
+}

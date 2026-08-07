@@ -1,0 +1,22 @@
+'speaker_0001' => 0
+'speaker_0002' => 1
+'speaker_0003' => 2
+'speaker_0004' => 3
+'speaker_0005' => 4
+'speaker_0006' => 5
+'speaker_0007' => 6
+'speaker_0008' => 7
+'speaker_0009' => 8
+'speaker_0010' => 9
+'speaker_0011' => 10
+'speaker_0012' => 11
+'speaker_0013' => 12
+'speaker_0014' => 13
+'speaker_0015' => 14
+'speaker_0016' => 15
+'speaker_0017' => 16
+'speaker_0018' => 17
+'speaker_0019' => 18
+'speaker_0020' => 19
+================
+'starting_index' => 0

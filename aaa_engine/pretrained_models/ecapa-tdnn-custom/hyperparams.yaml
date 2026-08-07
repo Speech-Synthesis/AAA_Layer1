@@ -1,0 +1,44 @@
+# =============================================================
+# AAA Engine - Custom-Trained ECAPA-TDNN
+# Hyperparameters for SpeakerRecognition.from_hparams() loading
+# =============================================================
+# This model was fine-tuned from speechbrain/spkrec-ecapa-voxceleb
+# on a custom speaker dataset using the AAA training pipeline.
+# =============================================================
+
+# Feature extraction
+compute_features: !new:speechbrain.lobes.features.Fbank
+    n_mels: 80
+
+# ECAPA-TDNN encoder (same architecture as VoxCeleb pre-trained)
+embedding_model: !new:speechbrain.lobes.models.ECAPA_TDNN.ECAPA_TDNN
+    input_size: 80
+    channels: [1024, 1024, 1024, 1024, 3072]
+    kernel_sizes: [5, 3, 3, 3, 1]
+    dilations: [1, 2, 3, 4, 1]
+    groups: [1, 1, 1, 1, 1]
+    attention_channels: 128
+    lin_neurons: 192
+
+# Mean-variance normalization
+mean_var_norm: !new:speechbrain.processing.features.InputNormalization
+    norm_type: sentence
+    std_norm: False
+
+# Label encoder (needed by SpeakerRecognition interface)
+label_encoder: !new:speechbrain.dataio.encoder.CategoricalEncoder
+
+# Module registry
+modules:
+    compute_features: !ref <compute_features>
+    embedding_model: !ref <embedding_model>
+    mean_var_norm: !ref <mean_var_norm>
+
+# Pretrainer: maps loadable components to their checkpoint files
+pretrainer: !new:speechbrain.utils.parameter_transfer.Pretrainer
+    loadables:
+        embedding_model: !ref <embedding_model>
+        mean_var_norm: !ref <mean_var_norm>
+    paths:
+        embedding_model: !ref <embedding_model.ckpt>
+        mean_var_norm: !ref <mean_var_norm_emb.ckpt>
