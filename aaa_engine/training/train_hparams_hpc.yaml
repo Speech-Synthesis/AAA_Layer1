@@ -36,8 +36,8 @@ skip_prep: False
 ckpt_interval_minutes: 15
 
 # ── Training Parameters (GPU-Optimized) ─────────────────────
-number_of_epochs: 20
-batch_size: 32
+number_of_epochs: 10
+batch_size: 16
 lr: 0.001
 base_lr: 0.00000001
 max_lr: !ref <lr>
@@ -56,7 +56,7 @@ deltas: False
 # ── Number of Speakers (output classes) ──────────────────────
 # IMPORTANT: Change this to match your full training dataset
 # speaker count when training on HPC with the 80GB dataset
-out_n_neurons: 20
+out_n_neurons: 1211
 
 # ── Pretrained Model (for fine-tuning) ───────────────────────
 pretrained_path: speechbrain/spkrec-ecapa-voxceleb

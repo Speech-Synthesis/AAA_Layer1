@@ -46,7 +46,7 @@ module load cuda/11.6
 
 # Activate environment
 eval "$(micromamba shell hook --shell bash)"
-micromamba activate myproject
+micromamba activate speaker_sv
 
 # Print environment info
 echo ""
@@ -72,10 +72,8 @@ echo "============================================================"
 
 cd aaa_engine
 
-python -m training.train_ecapa training/train_hparams.yaml \
-    --data_folder=../data \
-    --number_of_epochs=20 \
-    --batch_size=32
+python -m training.train_ecapa training/train_hparams_hpc.yaml \
+    --data_folder=/home/n_harini/datasets/voxceleb1_sv/vox1_dev_wav/wav
 
 # ============================================================
 # RUN EVALUATION

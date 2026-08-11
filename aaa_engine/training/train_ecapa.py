@@ -197,22 +197,32 @@ def prepare_csv_from_folder(data_folder, save_folder, split_ratio, sentence_len)
 
     for spk_folder in sorted(os.listdir(data_folder)):
         spk_path = os.path.join(data_folder, spk_folder)
+
         if not os.path.isdir(spk_path):
             continue
 
+        # VoxCeleb1 structure:
+        # speaker_id/video_id/*.wav
+        wav_files = sorted(
+            glob.glob(
+                os.path.join(spk_path, '**', '*.wav'),
+                recursive=True
+            )
+        )
+
+        if not wav_files:
+            continue
+
         speakers.add(spk_folder)
-        wav_files = sorted(glob.glob(os.path.join(spk_path, '*.wav')))
 
         for wav_path in wav_files:
-            try:
-                import soundfile as sf_local
-                info = sf_local.info(wav_path)
-                duration = info.duration
-            except Exception:
-                duration = sentence_len  # Fallback
+            # Avoid expensive soundfile.info() calls on the entire dataset.
+            # VoxCeleb1 audio is 16 kHz.
+            duration = sentence_len
 
             basename = os.path.splitext(os.path.basename(wav_path))[0]
             entry_id = f"{spk_folder}_{basename}"
+
             num_samples = int(duration * 16000)
 
             all_entries.append({
