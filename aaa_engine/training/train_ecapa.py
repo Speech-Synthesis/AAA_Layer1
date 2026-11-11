@@ -360,8 +360,8 @@ if __name__ == '__main__':
     print("  AAA Engine - ECAPA-TDNN Training")
     print("=" * 65)
 
-    # Enable cuDNN auto-tuner for GPU training
-    torch.backends.cudnn.benchmark = True
+    # benchmark=True intentionally NOT set: set_seed() enables deterministic=True;
+    # enabling benchmark overrides determinism and breaks RNG reproducibility.
 
     # Parse command-line arguments
     hparams_file, run_opts, overrides = sb.parse_arguments(sys.argv[1:])
@@ -417,7 +417,7 @@ if __name__ == '__main__':
     if pretrained_path:
         print("\n[Fine-tune] Loading pre-trained VoxCeleb weights...")
         try:
-            from speechbrain.pretrained import SpeakerRecognition
+            from speechbrain.inference.speaker import SpeakerRecognition  # SB>=1.0
             pretrained = SpeakerRecognition.from_hparams(
                 source=pretrained_path,
                 savedir=os.path.join(hparams['save_folder'], 'pretrained_voxceleb'),
