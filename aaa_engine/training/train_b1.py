@@ -948,6 +948,9 @@ def train(config_path: str, overrides: List[str]) -> None:
 
                 # Forward
                 embeddings = embedding_model(feats)
+                # ECAPA-TDNN returns (B, 1, 192) — squeeze to (B, 192)
+                if embeddings.dim() == 3:
+                    embeddings = embeddings.squeeze(1)
                 loss = classifier(embeddings, labels)
                 loss = loss / hparams["grad_accum_steps"]
 
