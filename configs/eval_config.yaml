@@ -1,0 +1,26 @@
+# Evaluation config — frozen after Day 3. Do not edit post-freeze.
+#
+# [BASELINE] Zero-shot evaluation of speechbrain/spkrec-ecapa-voxceleb.
+# This config is intentionally minimal — no fine-tuning parameters.
+# The pretrained model is loaded AS-IS from the HuggingFace Hub.
+#
+# Fields to fill in before first real evaluation run:
+#   manifest_hash : run `python -m aaa_engine.training.manifest_builder hash
+#                       --manifest path/to/manifest.jsonl` and paste the output.
+#   trial_list    : path to the downloaded VoxCeleb1-O cleaned trial list.
+#
+# DO NOT change pretrained_path after the config is frozen.
+# DO NOT change n_bootstrap or bootstrap_seed after first CI numbers are reported.
+
+pretrained_path: speechbrain/spkrec-ecapa-voxceleb
+pretrained_savedir: null  # defaults to HF cache (~/.cache/huggingface); override if needed
+
+manifest_hash: null       # fill in after manifest is built (sha256 hex string)
+trial_list: null          # fill in: absolute path to VoxCeleb1-O cleaned trial list
+
+output_dir: runs
+
+n_bootstrap: 1000
+bootstrap_seed: 42
+
+device: cpu               # change to cuda on HPC (auto-detected if null)
