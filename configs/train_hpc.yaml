@@ -1,0 +1,130 @@
+# =============================================================
+# configs/train_hpc.yaml
+# AAA Engine – B1 Fine-Tune – HPC / CLUSTER CONFIG
+# =============================================================
+# Purpose: full VoxCeleb1 fine-tune on a multi-GPU HPC node.
+#
+# Run (from train_job_b1.sh or manually):
+#   cd ${PROJECT_ROOT}
+#   python -m aaa_engine.training.train_b1 --config configs/train_hpc.yaml
+#
+# FILL_IN markers indicate values you must supply before submitting
+# the job.  Never hard-code personal paths or credentials here.
+#
+# Environment variables expected (set in job script or shell profile):
+#   DATA_ROOT    — absolute path to VoxCeleb1 dev wav root
+#   MUSAN_ROOT   — absolute path to MUSAN corpus root
+#   RIRS_ROOT    — absolute path to RIRS_NOISES corpus root
+#   MODEL_CACHE  — local directory for pretrained model cache
+#   PROJECT_ROOT — root of this repository on the cluster
+# =============================================================
+
+# ── Data ──────────────────────────────────────────────────────
+
+# FILL_IN: Set DATA_ROOT in your environment to the absolute path
+# of the VoxCeleb1 dev wav root (the folder containing speaker IDs
+# as subdirectories, each containing utterance WAV files).
+# Example: export DATA_ROOT=/scratch/username/voxceleb1/dev/wav
+data_folder: "${DATA_ROOT}  # FILL_IN: absolute path to VoxCeleb1 dev wav root"
+
+# ── Pretrained model ──────────────────────────────────────────
+
+# [BASELINE] HuggingFace Hub model ID.
+pretrained_path: speechbrain/spkrec-ecapa-voxceleb
+
+# [BASELINE] FILL_IN: Local cache for downloaded pretrained weights.
+# Example: export MODEL_CACHE=/scratch/username/model_cache
+pretrained_savedir: "${MODEL_CACHE}  # FILL_IN: local model cache directory"
+
+# ── Augmentation ──────────────────────────────────────────────
+
+# FILL_IN: Set MUSAN_ROOT in your environment.
+# Example: export MUSAN_ROOT=/scratch/username/musan
+musan_dir: "${MUSAN_ROOT}  # FILL_IN: path to MUSAN corpus root"
+
+# FILL_IN: Set RIRS_ROOT in your environment.
+# Example: export RIRS_ROOT=/scratch/username/RIRS_NOISES
+rirs_dir: "${RIRS_ROOT}  # FILL_IN: path to RIRS_NOISES corpus root"
+
+# ── Model head ────────────────────────────────────────────────
+
+# Number of speaker classes.
+# 1211 = number of speakers in VoxCeleb1 dev split.
+out_n_neurons: 1211
+
+# ── Training schedule ─────────────────────────────────────────
+
+# Micro-batch size per GPU.  Effective batch = 32 * 1 = 32.
+# Increase if GPU memory allows (e.g. A100 80 GB → 64).
+batch_size: 32
+
+# No gradient accumulation needed with a large GPU batch.
+grad_accum_steps: 1
+
+# Full training duration.  Adjust with patience for early stopping.
+number_of_epochs: 20
+
+# Crop lengths (seconds) sampled uniformly each batch.
+# Full range gives the model exposure to variable-duration inputs.
+crop_lengths: [1, 2, 3, 4]
+
+# ── Optimiser ─────────────────────────────────────────────────
+
+# [FINE-TUNED] Backbone (ECAPA-TDNN) learning rate.
+backbone_lr: 0.0001
+
+# [CUSTOM] AAM-Softmax head learning rate.
+head_lr: 0.001
+
+# ── Scheduler ─────────────────────────────────────────────────
+
+# Warmup steps before cosine decay.  ~1 epoch at batch_size=32
+# with VoxCeleb1 (~150k utterances / 32 ≈ 4700 steps/epoch).
+warmup_steps: 500
+
+# ── AAM-Softmax loss ──────────────────────────────────────────
+
+# Angular margin m (radians).
+aam_margin: 0.2
+
+# Feature scale s.
+aam_scale: 30
+
+# ── Gradient clipping ─────────────────────────────────────────
+
+max gradient L2 norm before clipping.
+grad_clip: 5.0
+
+# ── Early stopping ────────────────────────────────────────────
+
+# Stop if val EER does not improve for this many consecutive epochs.
+patience: 5
+
+# ── Logging ───────────────────────────────────────────────────
+
+# Log a metrics.jsonl row every N global optimiser steps.
+log_every_n_steps: 50
+
+# ── DataLoader ────────────────────────────────────────────────
+
+# Number of DataLoader worker processes.
+# FILL_IN: match to the number of CPU cores per node task
+# (e.g. 4 for a 4-CPU-per-task PBS job).
+num_workers: 4
+
+# ── Reproducibility ───────────────────────────────────────────
+
+seed: 1986
+
+# ── Sanity / debug ────────────────────────────────────────────
+
+# [EXPERIMENT] Must be false in production.
+debug_shuffle_labels: false
+
+# ── Output ────────────────────────────────────────────────────
+
+# FILL_IN: Set to a directory outside the Git repo to avoid
+# committing large checkpoint files.  The job script sets
+# PROJECT_ROOT and writes checkpoints to ${PROJECT_ROOT}/runs/.
+# Example: export PROJECT_ROOT=/scratch/username/AAA_Layer1
+runs_dir: "${PROJECT_ROOT}/runs  # FILL_IN: checkpoint output directory"
