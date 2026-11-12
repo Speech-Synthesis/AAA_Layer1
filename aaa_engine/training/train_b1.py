@@ -235,7 +235,7 @@ class AAMSoftmax(nn.Module):
 
 class SpeakerDataset(torch.utils.data.Dataset):
     """
-    [CUSTOM] Reads a CSV manifest with columns: speaker_id, wav_path.
+    Reads a CSV manifest with columns: speaker_id, wav_path.
     Randomly crops each waveform to crop_len seconds.
     crop_len is chosen per batch from hparams['crop_lengths'].
     """
@@ -321,7 +321,7 @@ class SpeakerDataset(torch.utils.data.Dataset):
 
 class WarmupCosineScheduler(torch.optim.lr_scheduler.LambdaLR):
     """
-    [CUSTOM] Linear warmup for `warmup_steps`, then cosine decay to 0.
+    Linear warmup for `warmup_steps`, then cosine decay to 0.
     Works at the step (not epoch) level.
     """
 
@@ -499,7 +499,7 @@ def validate(
     max_pairs: int = 5000,
 ) -> Tuple[float, float, float]:
     """
-    [CUSTOM] Compute val EER and FRR@FAR1%.
+    Compute val EER and FRR@FAR1%.
 
     1. Extract embeddings for all val utterances.
     2. Build same-speaker (+) and cross-speaker (-) trial pairs.

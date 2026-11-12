@@ -2,7 +2,7 @@
 # training/sv_eval.py
 # AAA Engine — B0 Baseline Speaker Verification Evaluation
 # =============================================================
-# [BASELINE] Zero-shot evaluation of the pretrained ECAPA-TDNN
+# Zero-shot evaluation of the pretrained ECAPA-TDNN
 # from speechbrain/spkrec-ecapa-voxceleb (unchanged weights).
 #
 # This script is FROZEN after Day 3. The pretrained model is used
@@ -76,7 +76,7 @@ def _log_versions() -> Dict[str, str]:
         "numpy": np.__version__,
         "scipy": scipy.__version__,
     }
-    print("\n[BASELINE] Library versions:")
+    print("\nLibrary versions:")
     for lib, ver in versions.items():
         print(f"  {lib}: {ver}")
     return versions
@@ -87,7 +87,7 @@ def _log_versions() -> Dict[str, str]:
 # ---------------------------------------------------------------------------
 def load_baseline_model(savedir: Optional[str] = None):
     """
-    [BASELINE] Load the pretrained ECAPA-TDNN from HuggingFace Hub.
+    Load the pretrained ECAPA-TDNN from HuggingFace Hub.
 
     The model weights are NOT modified in any way. This is the
     published speechbrain/spkrec-ecapa-voxceleb checkpoint, used
@@ -104,12 +104,12 @@ def load_baseline_model(savedir: Optional[str] = None):
     versions = _log_versions()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    logger.info("[BASELINE] Using device: %s", device)
+    logger.info("Using device: %s", device)
 
     run_opts = {"device": device}
     source = "speechbrain/spkrec-ecapa-voxceleb"
 
-    logger.info("[BASELINE] Loading %s ...", source)
+    logger.info("Loading %s ...", source)
     model = SpeakerRecognition.from_hparams(
         source=source,
         savedir=savedir,
@@ -130,22 +130,22 @@ def load_baseline_model(savedir: Optional[str] = None):
     actual_dim = dummy_emb_np.shape[-1]
     if actual_dim != EXPECTED_EMB_DIM:
         raise RuntimeError(
-            f"[BASELINE] Embedding dim mismatch: expected {EXPECTED_EMB_DIM}, "
+            f"Embedding dim mismatch: expected {EXPECTED_EMB_DIM}, "
             f"got {actual_dim}. Wrong model checkpoint?"
         )
 
     l2_norm = float(np.linalg.norm(dummy_emb_np))
     if abs(l2_norm - 1.0) > 0.05:
         logger.warning(
-            "[BASELINE] L2 norm of dummy embedding is %.5f (expected ≈ 1.0). "
+            "L2 norm of dummy embedding is %.5f (expected ≈ 1.0). "
             "Model may not be normalising internally — sv_eval will normalise.",
             l2_norm,
         )
     else:
-        logger.info("[BASELINE] L2 norm check OK: %.6f ≈ 1.0", l2_norm)
+        logger.info("L2 norm check OK: %.6f ≈ 1.0", l2_norm)
 
     print(
-        "\n[BASELINE] Loaded speechbrain/spkrec-ecapa-voxceleb unchanged\n"
+        "\nLoaded speechbrain/spkrec-ecapa-voxceleb unchanged\n"
         f"  emb_dim={actual_dim}  l2_norm={l2_norm:.6f}  device={device}"
     )
     return model, versions
@@ -233,7 +233,7 @@ def extract_embedding(model, waveform: torch.Tensor) -> np.ndarray:
     Extract an L2-normalised 192-dim embedding from a waveform.
 
     Args:
-        model:    Loaded SpeakerRecognition model ([BASELINE]).
+        model:    Loaded SpeakerRecognition model.
         waveform: 1-D float32 tensor of shape (n_samples,).
 
     Returns:
@@ -544,7 +544,7 @@ def run_evaluation(
 
     Steps:
       1.  Verify manifest sha256 matches config['manifest_hash'] (hard fail).
-      2.  Load [BASELINE] model.
+      2.  Load model.
       3.  Load trial list → compute trial_hash.
       4.  Extract embeddings for all unique files (caching).
       5.  Compute cosine similarity scores.
@@ -644,7 +644,7 @@ def run_evaluation(
     results = {
         "run_id": str(uuid.uuid4()),
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "provenance": "[BASELINE] speechbrain/spkrec-ecapa-voxceleb unchanged",
+        "provenance": "speechbrain/spkrec-ecapa-voxceleb (pretrained, unchanged)",
         "lib_versions": lib_versions,
         "trial_list": {
             "path": str(trial_list_path),
@@ -669,7 +669,7 @@ def run_evaluation(
     }
 
     logger.info(
-        "[BASELINE] Results — EER: %.2f%%  FRR@FAR1%%: %.4f  "
+        "Results — EER: %.2f%%  FRR@FAR1%%: %.4f  "
         "95%% CI EER: [%.2f%%, %.2f%%]",
         eer_pct,
         frr_at_far1,
@@ -962,7 +962,7 @@ def generate_trial_buckets(
 def _parse_args(argv=None):
     parser = argparse.ArgumentParser(
         description=(
-            "[BASELINE] Zero-shot EER evaluation of speechbrain/spkrec-ecapa-voxceleb. "
+            "Zero-shot EER evaluation of speechbrain/spkrec-ecapa-voxceleb. "
             "Config is frozen after Day 3 — do not edit eval_config.yaml post-freeze."
         )
     )
@@ -1014,7 +1014,7 @@ def main(argv=None):
 
     run_id = args.run_id or results["run_id"]
     save_results(results, run_id=run_id, output_dir=output_dir)
-    print(f"\n[BASELINE] Evaluation complete. Run ID: {run_id}")
+    print(f"\nEvaluation complete. Run ID: {run_id}")
     print(f"  EER: {results['metrics']['eer_pct']:.4f}%")
     print(f"  FRR@FAR1%: {results['metrics']['frr_at_far1pct'] * 100:.4f}%")
     print(f"  Results saved to: {output_dir}/{run_id}/")

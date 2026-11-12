@@ -102,7 +102,7 @@ cd d:\AAA_Layer1\aaa_engine
 python -m pytest ../tests/test_layer1.py ../tests/test_sv_pipeline.py -v
 ```
 
-**Result (2026-11-12):** 39/39 PASSED in 6.25s — see `docs/evidence/day1/test_output.txt`
+**Result (2026-11-12):** 39/39 PASSED in 6.48s — see `docs/evidence/day1/test_output.txt`
 
 | Test | Description | Status |
 |---|---|---|

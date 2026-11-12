@@ -1,7 +1,7 @@
 # =============================================================
 # training/augment.py
 # AAA Engine – B1 Training Pipeline
-# [CUSTOM] Seeded, reproducible audio augmentation pipeline
+# Seeded, reproducible audio augmentation pipeline
 # =============================================================
 # Applies a stochastic chain of augmentations for data-
 # augmentation during speaker-verification fine-tuning.
@@ -50,7 +50,7 @@ _CODEC_MAP = {
 
 def check_ffmpeg_codecs() -> List[str]:
     """
-    [CUSTOM] Probe ffmpeg for each candidate codec.
+    Probe ffmpeg for each candidate codec.
 
     For each codec in _CODEC_CANDIDATES, encodes a tiny silent
     clip and checks the return code.  Returns only codecs whose
@@ -113,7 +113,7 @@ def check_ffmpeg_codecs() -> List[str]:
 
 class Augmenter:
     """
-    [CUSTOM] Seeded, reproducible audio augmentation pipeline.
+    Seeded, reproducible audio augmentation pipeline.
 
     Parameters
     ----------
@@ -262,7 +262,7 @@ class Augmenter:
 
     def _add_noise(self, waveform: torch.Tensor, sr: int) -> torch.Tensor:
         """
-        [CUSTOM] Additive MUSAN noise at a random SNR from SNR_CHOICES.
+        Additive MUSAN noise at a random SNR from SNR_CHOICES.
         Loads a random noise file; if the noise is shorter than the
         signal, the noise is tiled (this is noise, not speech, so
         tiling is acoustically reasonable).  If longer, it is cropped.
@@ -306,7 +306,7 @@ class Augmenter:
 
     def _apply_reverb(self, waveform: torch.Tensor, sr: int) -> torch.Tensor:
         """
-        [CUSTOM] Convolve signal with a random RIR (Room Impulse Response).
+        Convolve signal with a random RIR (Room Impulse Response).
         Output is trimmed to the original length — no padding.
         """
         rir_path = self._rand_choice(self._rir_files)
@@ -350,7 +350,7 @@ class Augmenter:
 
     def _band_limit(self, waveform: torch.Tensor, sr: int) -> torch.Tensor:
         """
-        [CUSTOM] Simulate band-limited channel via torchaudio resample.
+        Simulate band-limited channel via torchaudio resample.
         Picks a random low-pass cutoff in [2000, 7000] Hz by downsampling
         to 2*cutoff then back to sr.  Returns original tensor on failure.
         """
@@ -376,7 +376,7 @@ class Augmenter:
 
     def _resample_chain(self, waveform: torch.Tensor, sr: int) -> torch.Tensor:
         """
-        [CUSTOM] Downsample to 8 kHz then back to sr (codec-like degradation).
+        Downsample to 8 kHz then back to sr (codec-like degradation).
         """
         if sr <= 8000:
             return waveform
@@ -395,7 +395,7 @@ class Augmenter:
 
     def _codec_roundtrip(self, waveform: torch.Tensor, sr: int) -> torch.Tensor:
         """
-        [CUSTOM] Encode/decode via ffmpeg subprocess with a random codec.
+        Encode/decode via ffmpeg subprocess with a random codec.
         On any failure, returns the original waveform unchanged.
         """
         if not self._codecs:
