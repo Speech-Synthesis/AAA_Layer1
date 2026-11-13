@@ -99,7 +99,10 @@ def load_baseline_model(savedir: Optional[str] = None):
     Returns:
         SpeakerRecognition model (eval mode, on selected device).
     """
-    from speechbrain.inference.speaker import SpeakerRecognition
+    try:
+        from speechbrain.inference.speaker import SpeakerRecognition
+    except ImportError:
+        from speechbrain.pretrained import SpeakerRecognition
 
     versions = _log_versions()
 

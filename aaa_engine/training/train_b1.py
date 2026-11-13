@@ -392,7 +392,10 @@ def load_pretrained_ecapa(hparams: Dict[str, Any]) -> nn.Module:
         return embedding_model, None
 
     # ── Path 2: SpeechBrain from_hparams (Linux / HPC) ──────────────────
-    from speechbrain.inference.speaker import SpeakerRecognition
+    try:
+        from speechbrain.inference.speaker import SpeakerRecognition
+    except ImportError:
+        from speechbrain.pretrained import SpeakerRecognition
 
     pretrained = SpeakerRecognition.from_hparams(
         source=hparams["pretrained_path"],
