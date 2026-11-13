@@ -397,9 +397,12 @@ def load_pretrained_ecapa(hparams: Dict[str, Any]) -> nn.Module:
     except ImportError:
         from speechbrain.pretrained import SpeakerRecognition
 
+    savedir = hparams.get("pretrained_savedir")
+    savedir = os.path.expanduser(savedir) if savedir else os.path.expanduser("~/.cache/huggingface/speechbrain_pretrained")
+
     pretrained = SpeakerRecognition.from_hparams(
         source=hparams["pretrained_path"],
-        savedir=os.path.expanduser(hparams["pretrained_savedir"]),
+        savedir=savedir,
         run_opts={"device": "cpu"},
     )
     embedding_model.load_state_dict(pretrained.mods.embedding_model.state_dict())
