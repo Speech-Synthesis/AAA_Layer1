@@ -45,6 +45,18 @@ import torchaudio
 import yaml
 from scipy.spatial.distance import cosine as cosine_distance
 
+# SpeechBrain 0.5.x / huggingface_hub >= 0.23 compatibility
+try:
+    import huggingface_hub
+    _orig_hf_download = huggingface_hub.hf_hub_download
+    def _compat_hf_download(*args, **kwargs):
+        if "use_auth_token" in kwargs:
+            kwargs["token"] = kwargs.pop("use_auth_token")
+        return _orig_hf_download(*args, **kwargs)
+    huggingface_hub.hf_hub_download = _compat_hf_download
+except Exception:
+    pass
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
