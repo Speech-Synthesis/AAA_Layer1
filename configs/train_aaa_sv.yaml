@@ -1,0 +1,137 @@
+# =============================================================
+# configs/train_aaa_sv.yaml
+# AAA Engine – AAA-SV Joint Training (B1 + Stability Head q)
+# HPC / CLUSTER CONFIG
+# =============================================================
+# Purpose: fine-tune ECAPA-TDNN backbone (resumed from B1 checkpoint)
+# jointly with the stability head q(x).
+#
+# Run (from train_aaa_sv_job.sh or manually):
+#   cd ${PROJECT_ROOT}
+#   python -m aaa_engine.training.train_aaa_sv \
+#       --config configs/train_aaa_sv.yaml \
+#       --b1-checkpoint runs/<b1_run_id>/checkpoint_best.pt
+#
+# Environment variables expected (set in job script or shell profile):
+#   DATA_ROOT    — absolute path to VoxCeleb1 dev wav root
+#   MUSAN_ROOT   — absolute path to MUSAN corpus root
+#   RIRS_ROOT    — absolute path to RIRS_NOISES corpus root
+#   MODEL_CACHE  — local directory for pretrained model cache
+#   PROJECT_ROOT — root of this repository on the cluster
+# =============================================================
+
+# ── Data ──────────────────────────────────────────────────────
+
+data_folder: "${DATA_ROOT}  # FILL_IN: absolute path to VoxCeleb1 dev wav root"
+
+# ── Pretrained model ──────────────────────────────────────────
+
+# [BASELINE] HuggingFace Hub model ID.
+pretrained_path: speechbrain/spkrec-ecapa-voxceleb
+
+# [BASELINE] FILL_IN: Local cache for downloaded pretrained weights.
+pretrained_savedir: "${MODEL_CACHE}  # FILL_IN: local model cache directory"
+
+# ── Augmentation ──────────────────────────────────────────────
+
+musan_dir: "${MUSAN_ROOT}  # FILL_IN: path to MUSAN corpus root"
+rirs_dir:  "${RIRS_ROOT}   # FILL_IN: path to RIRS_NOISES corpus root"
+
+# ── Manifests ─────────────────────────────────────────────────
+
+train_manifest: data/manifests/train.csv
+val_manifest:   data/manifests/val.csv
+
+# ── Model head ────────────────────────────────────────────────
+
+# 1211 = number of speakers in VoxCeleb1 dev split.
+out_n_neurons: 1211
+
+# ── Training schedule ─────────────────────────────────────────
+
+# Micro-batch size per GPU.
+batch_size: 32
+
+# No gradient accumulation needed with a large GPU batch.
+grad_accum_steps: 1
+
+# Full training duration.
+number_of_epochs: 20
+
+# Crop lengths (seconds) for the DEGRADED view.
+crop_lengths: [1, 2, 3, 4]
+
+# ── Optimiser ─────────────────────────────────────────────────
+
+# [FINE-TUNED] Backbone (ECAPA-TDNN) learning rate.
+backbone_lr: 0.0001
+
+# [CUSTOM] AAM-Softmax head learning rate.
+head_lr: 0.001
+
+# [CUSTOM] Stability head q(x) learning rate (spec §12).
+q_head_lr: 0.001
+
+# ── Scheduler ─────────────────────────────────────────────────
+
+warmup_steps: 500
+
+# ── AAM-Softmax loss ──────────────────────────────────────────
+
+aam_margin: 0.2
+aam_scale: 30
+
+# ── Stability Head (spec §4, §6, §7, §12) ────────────────────
+
+# [CUSTOM] Enable the auxiliary stability head q(x).
+enable_stability_head: true
+
+# [CUSTOM] Weight of L_q in the total loss (spec §12).
+# L = L_AAM + lambda_q * L_q
+lambda_q: 0.1
+
+# [CUSTOM] Dimensionality of the pooled-stats vector fed into q.
+# For ECAPA-TDNN + ASP this is 6144 (3072 mean + 3072 std, spec §6).
+q_pool_dim: 6144
+
+# [CUSTOM] Hidden layer width of the q head (spec §4).
+q_hidden_dim: 256
+
+# [CUSTOM] Max duration (seconds) for the clean reference view x_ref.
+# Spec §12: up to 6 seconds.
+q_ref_max_duration: 6.0
+
+# [CUSTOM] Path to a B1 checkpoint for warm-starting the backbone.
+# Override at job submission time:
+#   --override b1_checkpoint=/path/to/checkpoint_best.pt
+# or pass --b1-checkpoint on the command line.
+b1_checkpoint: null
+
+# ── Gradient clipping ─────────────────────────────────────────
+
+grad_clip: 5.0
+
+# ── Early stopping ────────────────────────────────────────────
+
+patience: 5
+
+# ── Logging ───────────────────────────────────────────────────
+
+log_every_n_steps: 50
+
+# ── DataLoader ────────────────────────────────────────────────
+
+num_workers: 4
+
+# ── Reproducibility ───────────────────────────────────────────
+
+seed: 1986
+
+# ── Sanity / debug ────────────────────────────────────────────
+
+# [EXPERIMENT] Must be false in production.
+debug_shuffle_labels: false
+
+# ── Output ────────────────────────────────────────────────────
+
+runs_dir: "${PROJECT_ROOT}/runs  # FILL_IN: checkpoint output directory"
