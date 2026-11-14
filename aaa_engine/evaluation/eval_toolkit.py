@@ -788,13 +788,19 @@ def _build_embedding_fn(ckpt_path: str) -> Callable[[str], np.ndarray]:
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     from speechbrain.lobes.models.ECAPA_TDNN import ECAPA_TDNN
-    from speechbrain.lobes.features import Fbank
-    from speechbrain.processing.features import InputNormalization
 
-    compute_features = Fbank(n_mels=80)
-    mean_var_norm = InputNormalization(norm_type="sentence", std_norm=False)
-    compute_features.to(device)
-    mean_var_norm.to(device)
+    # Use torchaudio MelSpectrogram directly — avoids SpeechBrain Fbank
+    # version-dependent output shapes (some versions return [B, n_mels+4, T]).
+    # Matches the feature extraction used in train_b1.py.
+    _mel_transform = torchaudio.transforms.MelSpectrogram(
+        sample_rate=16000,
+        n_fft=512,
+        win_length=400,
+        hop_length=160,
+        n_mels=80,
+        f_min=20,
+        f_max=7600,
+    ).to(device)
 
     model = ECAPA_TDNN(
         input_size=80,
@@ -836,18 +842,19 @@ def _build_embedding_fn(ckpt_path: str) -> Callable[[str], np.ndarray]:
             wav = wav.mean(dim=0, keepdim=True)
         if sr != _SAMPLE_RATE:
             wav = torchaudio.transforms.Resample(sr, _SAMPLE_RATE)(wav)
-        wav = wav.to(device)
+        wav = wav.to(device)  # [1, T]
 
         with torch.no_grad():
-            # compute_features expects [batch, time] → returns [batch, time, n_mels]
-            wav_2d = wav.squeeze(0)  # [T]
-            wav_2d = wav_2d.unsqueeze(0)  # [1, T] = [batch, time]
-            feats = compute_features(wav_2d)  # [1, T', 80]
-            lens = torch.ones(feats.shape[0], device=device)  # [1]
-            feats = mean_var_norm(feats, lens)  # [1, T', 80]
-            # ECAPA_TDNN forward expects [batch, n_mels, time]
-            feats = feats.transpose(1, 2)  # [1, 80, T']
-            emb = model(feats)             # [1, 192] or [1, 1, 192]
+            # MelSpectrogram: [1, T] → [1, n_mels, T'] = [1, 80, T']
+            feats = _mel_transform(wav)                    # [1, 80, T']
+            # Log-mel (clamp for numerical stability)
+            feats = torch.clamp(feats, min=1e-9).log()    # [1, 80, T']
+            # Per-utterance mean-variance normalisation over time
+            mean = feats.mean(dim=2, keepdim=True)
+            std = feats.std(dim=2, keepdim=True).clamp(min=1e-9)
+            feats = (feats - mean) / std                   # [1, 80, T']
+            # ECAPA_TDNN forward: expects [batch, n_mels, time] = [1, 80, T']
+            emb = model(feats)                             # [1, 192] or [1, 1, 192]
             if emb.dim() == 3:
                 emb = emb.squeeze(1)
 
