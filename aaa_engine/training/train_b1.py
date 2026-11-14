@@ -534,10 +534,10 @@ def validate(
     with open(val_manifest, "r", encoding="utf-8") as f:
         for row in csv.DictReader(f):
             wp = row.get("wav_path", row.get("wav", ""))
-        wp = wp.replace("{data_root}/", "").replace("{data_root}\\", "")
-        sp = row.get("speaker_id", row.get("spk_id", ""))
-        if wp and sp:
-            samples.append((wp, sp))
+            wp = wp.replace("{data_root}/", "").replace("{data_root}\\", "")
+            sp = row.get("speaker_id", row.get("spk_id", ""))
+            if wp and sp:
+                samples.append((wp, sp))
 
     if not samples:
         logger.warning("[val] Val manifest is empty — skipping evaluation.")
