@@ -17,7 +17,7 @@
 
 #PBS -N aaa_sv_train
 #PBS -q workq
-#PBS -l select=1:ncpus=4:mem=32gb
+#PBS -l select=1:ncpus=4:mem=32gb:host=node01
 #PBS -l walltime=24:00:00
 #PBS -o logs/train_aaa_sv.out
 #PBS -e logs/train_aaa_sv.err

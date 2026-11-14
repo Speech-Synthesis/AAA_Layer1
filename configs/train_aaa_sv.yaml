@@ -50,10 +50,10 @@ out_n_neurons: 1211
 # ── Training schedule ─────────────────────────────────────────
 
 # Micro-batch size per GPU.
-batch_size: 32
+batch_size: 16
 
-# No gradient accumulation needed with a large GPU batch.
-grad_accum_steps: 1
+# Gradient accumulation steps (16 * 2 = 32 effective batch).
+grad_accum_steps: 2
 
 # Full training duration.
 number_of_epochs: 20
