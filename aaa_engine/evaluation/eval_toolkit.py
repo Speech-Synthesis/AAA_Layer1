@@ -839,10 +839,15 @@ def _build_embedding_fn(ckpt_path: str) -> Callable[[str], np.ndarray]:
         wav = wav.to(device)
 
         with torch.no_grad():
-            feats = compute_features(wav)
-            lens = torch.ones(wav.shape[0], device=device)
-            feats = mean_var_norm(feats, lens)
-            emb = model(feats)
+            # compute_features expects [batch, time] → returns [batch, time, n_mels]
+            wav_2d = wav.squeeze(0)  # [T]
+            wav_2d = wav_2d.unsqueeze(0)  # [1, T] = [batch, time]
+            feats = compute_features(wav_2d)  # [1, T', 80]
+            lens = torch.ones(feats.shape[0], device=device)  # [1]
+            feats = mean_var_norm(feats, lens)  # [1, T', 80]
+            # ECAPA_TDNN forward expects [batch, n_mels, time]
+            feats = feats.transpose(1, 2)  # [1, 80, T']
+            emb = model(feats)             # [1, 192] or [1, 1, 192]
             if emb.dim() == 3:
                 emb = emb.squeeze(1)
 
