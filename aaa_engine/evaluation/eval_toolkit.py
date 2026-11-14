@@ -778,62 +778,53 @@ def _is_test_manifest(path: str) -> bool:
 def _build_embedding_fn(ckpt_path: str) -> Callable[[str], np.ndarray]:
     """Build an embedding function from a checkpoint.
 
-    The checkpoint must have been saved with:
-        torch.save({"model_state_dict": ..., "config": {...}}, ckpt_path)
-    or be a plain state dict.
-
-    For the CLI we support loading the AAA-SV / B1 checkpoint produced by
-    train_b1.py / train_aaa_sv.py.  At runtime we import the model class
-    lazily so that the toolkit module itself has no torch dependency at
-    import time (pure-Python path for testing).
+    Supports loading:
+      - B1 / AAA-SV checkpoints saved with state dict key "model" or "model_state_dict"
+      - Pretrained baseline models via SpeechBrain
     """
     import torch
+    import torchaudio
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    state = torch.load(ckpt_path, map_location=device)
-    if isinstance(state, dict) and "model_state_dict" in state:
-        state_dict = state["model_state_dict"]
-        config = state.get("config", {})
-    else:
-        state_dict = state
-        config = {}
 
-    # Try to load ECAPA-TDNN from the training module
-    try:
-        from aaa_engine.training.train_b1 import ECAPA_TDNN  # type: ignore
-    except ImportError:
-        try:
-            from speechbrain.lobes.models.ECAPA_TDNN import ECAPA_TDNN  # type: ignore
-        except ImportError:
-            raise RuntimeError(
-                "Cannot load ECAPA_TDNN model class. "
-                "Either aaa_engine.training.train_b1 or speechbrain must be importable."
-            )
+    from speechbrain.lobes.models.ECAPA_TDNN import ECAPA_TDNN
+    from speechbrain.lobes.features import Fbank
+    from speechbrain.processing.features import InputNormalization
 
-    channels = config.get("channels", 512)
-    lin_neurons = config.get("lin_neurons", 192)
+    compute_features = Fbank(n_mels=80)
+    mean_var_norm = InputNormalization(norm_type="sentence", std_norm=False)
+    compute_features.to(device)
+    mean_var_norm.to(device)
+
     model = ECAPA_TDNN(
         input_size=80,
-        channels=[channels] * 5,
+        channels=[1024, 1024, 1024, 1024, 3072],
         kernel_sizes=[5, 3, 3, 3, 1],
         dilations=[1, 2, 3, 4, 1],
+        groups=[1, 1, 1, 1, 1],
         attention_channels=128,
-        lin_neurons=lin_neurons,
+        lin_neurons=192,
     )
+
+    state = torch.load(ckpt_path, map_location=device)
+    if isinstance(state, dict):
+        if "model" in state:
+            state_dict = state["model"]
+        elif "model_state_dict" in state:
+            state_dict = state["model_state_dict"]
+        else:
+            state_dict = state
+    else:
+        state_dict = state
+
     model.load_state_dict(state_dict, strict=False)
     model.eval()
     model.to(device)
-
-    try:
-        import torchaudio
-    except ImportError:
-        raise RuntimeError("torchaudio is required for the CLI embedding function.")
 
     _SAMPLE_RATE = 16000
 
     def embedding_fn(wav_path: str) -> np.ndarray:
         import soundfile as sf
-        import torch
 
         try:
             data, sr = sf.read(wav_path, dtype="float32", always_2d=True)
@@ -848,7 +839,13 @@ def _build_embedding_fn(ckpt_path: str) -> Callable[[str], np.ndarray]:
         wav = wav.to(device)
 
         with torch.no_grad():
-            emb = model(wav)
+            feats = compute_features(wav)
+            lens = torch.ones(wav.shape[0], device=device)
+            feats = mean_var_norm(feats, lens)
+            emb = model(feats)
+            if emb.dim() == 3:
+                emb = emb.squeeze(1)
+
         emb_np = emb.squeeze().cpu().numpy().astype(np.float32)
         norm = np.linalg.norm(emb_np)
         if norm > 1e-9:
