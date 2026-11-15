@@ -1,0 +1,10 @@
+# B1 Checkpoint SHA256 Hashes
+# Run: 20261113-1718_09dc907_5e10bf
+# Recorded: 2026-11-15T00:32:51+05:30
+# Node: amritahpc (login node, sha256sum)
+
+checkpoint_best.pt  f78e2b6c1c20bdee8930dd5e04c47837e962c7aae8cee74866c71c212b03cdbd
+checkpoint_last.pt  260db647fc93f6fbade2c4b11937a255c681974358ba01a7087f37d66e10e67a
+
+# Model label: [BASELINE] backbone (frozen, epoch 1 only), ArcFace head trained
+# These checkpoints are NOT [FINE-TUNED] - backbone was frozen for all of epoch 1

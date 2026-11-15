@@ -1,0 +1,7 @@
+# AAA-SV B1 Checkpoint SHA256 Hashes
+# Run: 20261113-1718_09dc907_5e10bf
+# Branch: feat/navadeep-aaa-sv
+# Recorded: 2026-11-15T00:32:51+05:30 (amritahpc login node)
+
+f78e2b6c1c20bdee8930dd5e04c47837e962c7aae8cee74866c71c212b03cdbd  checkpoint_best.pt
+260db647fc93f6fbade2c4b11937a255c681974358ba01a7087f37d66e10e67a  checkpoint_last.pt

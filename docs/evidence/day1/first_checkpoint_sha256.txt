@@ -1,0 +1,15 @@
+# Clean Smoke Run Checkpoint Hashes (HEAD ca0744b)
+Run ID: 20261112-0758_ca0744b_6596ea
+Generated: 2026-11-12T13:32:29+05:30
+
+checkpoint_best.pt SHA256:
+de1e6523e4f1a4c923f9c0ee7774780d3183db5248133c4da923310b79d77cb0
+
+checkpoint_last.pt SHA256:
+d03262b4af13d7ec6b422344515a9a57e0c8507ac6818cb097756a72af0e37cc
+
+---
+# Superseded Run Hashes (Commit 9eef8dc with working-tree squeeze fix)
+Run ID: 20261111-1918_9eef8dc_6596ea
+checkpoint_best.pt SHA256: f479378f16472e1a7a6589ac6537eb2a617d5954c5a52f0f2c8d00a17831ee6c
+checkpoint_last.pt SHA256: 2913a976b8e99c1b0130f89b47ed13ca2bb213157dc33b6ec26917f3d19a49e7

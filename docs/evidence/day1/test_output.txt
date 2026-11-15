@@ -1,0 +1,65 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.12.4, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\Navadeep Maka\AppData\Local\Programs\Python\Python312\python.exe
+cachedir: .pytest_cache
+rootdir: D:\AAA_Layer1
+plugins: anyio-4.12.0, dash-3.2.0
+collecting ... collected 39 items
+
+..\tests\test_layer1.py::TestCosineSimilarity::test_same_vector_returns_one PASSED [  2%]
+..\tests\test_layer1.py::TestCosineSimilarity::test_different_vectors_below_threshold PASSED [  5%]
+..\tests\test_layer1.py::TestCosineSimilarity::test_orthogonal_vectors_near_zero PASSED [  7%]
+..\tests\test_layer1.py::TestCosineSimilarity::test_negated_vector_clamped_to_zero PASSED [ 10%]
+..\tests\test_layer1.py::TestCosineSimilarity::test_score_always_between_zero_and_one PASSED [ 12%]
+..\tests\test_layer1.py::TestCosineSimilarity::test_slightly_perturbed_vector_high_similarity PASSED [ 15%]
+..\tests\test_layer1.py::TestThresholdDecision::test_accept_when_score_above_threshold PASSED [ 17%]
+..\tests\test_layer1.py::TestThresholdDecision::test_reject_when_score_below_threshold PASSED [ 20%]
+..\tests\test_layer1.py::TestThresholdDecision::test_exact_threshold_is_accept PASSED [ 23%]
+..\tests\test_layer1.py::TestThresholdDecision::test_just_below_threshold_is_reject PASSED [ 25%]
+..\tests\test_layer1.py::TestVerifySpeaker::test_reject_unenrolled_user PASSED [ 28%]
+..\tests\test_layer1.py::TestVerifySpeaker::test_error_handling_returns_reject PASSED [ 30%]
+..\tests\test_layer1.py::TestVerifySpeaker::test_response_keys_present_on_accept PASSED [ 33%]
+..\tests\test_layer1.py::TestVerifySpeaker::test_response_keys_present_on_reject PASSED [ 35%]
+..\tests\test_layer1.py::TestVerifySpeaker::test_custom_threshold PASSED [ 38%]
+..\tests\test_layer1.py::TestEmbeddingProperties::test_embedding_is_192_dim PASSED [ 41%]
+..\tests\test_layer1.py::TestEmbeddingProperties::test_embedding_is_l2_normalized PASSED [ 43%]
+..\tests\test_layer1.py::TestEnrollment::test_reject_already_enrolled_user PASSED [ 46%]
+..\tests\test_layer1.py::TestEnrollment::test_successful_enrollment PASSED [ 48%]
+..\tests\test_layer1.py::TestEnrollment::test_enrollment_db_failure PASSED [ 51%]
+..\tests\test_layer1.py::TestEnrollment::test_enrollment_audio_error PASSED [ 53%]
+..\tests\test_layer1.py::TestEnrollment::test_re_enrollment_success PASSED [ 56%]
+..\tests\test_layer1.py::TestAudioValidation::test_audio_too_short_raises_valueerror PASSED [ 58%]
+..\tests\test_layer1.py::TestAudioValidation::test_audio_too_long_raises_valueerror PASSED [ 61%]
+..\tests\test_layer1.py::TestAudioValidation::test_valid_duration_passes PASSED [ 64%]
+..\tests\test_layer1.py::TestAudioValidation::test_stereo_to_mono_conversion PASSED [ 66%]
+..\tests\test_layer1.py::TestAudioValidation::test_resample_to_16khz PASSED [ 69%]
+..\tests\test_layer1.py::TestConstants::test_threshold_is_075 PASSED     [ 71%]
+..\tests\test_layer1.py::TestConstants::test_min_duration PASSED         [ 74%]
+..\tests\test_layer1.py::TestConstants::test_max_duration PASSED         [ 76%]
+..\tests\test_layer1.py::TestDbUtils::test_store_voiceprint_computes_sha256_hash PASSED [ 79%]
+..\tests\test_layer1.py::TestDbUtils::test_fetch_voiceprint_returns_numpy_array PASSED [ 82%]
+..\tests\test_layer1.py::TestDbUtils::test_fetch_voiceprint_returns_none_when_not_found PASSED [ 84%]
+..\tests\test_layer1.py::TestDbUtils::test_log_auth_result_inserts_record PASSED [ 87%]
+..\tests\test_sv_pipeline.py::test_resume_continuity PASSED              [ 89%]
+..\tests\test_sv_pipeline.py::test_preprocessing_parity PASSED           [ 92%]
+..\tests\test_sv_pipeline.py::test_shuffled_label_sanity PASSED          [ 94%]
+..\tests\test_sv_pipeline.py::test_embedding_norm PASSED                 [ 97%]
+..\tests\test_sv_pipeline.py::test_augmentation_reproducibility PASSED   [100%]
+
+============================== warnings summary ===============================
+layer1\speaker_verifier.py:19
+  D:\AAA_Layer1\aaa_engine\layer1\speaker_verifier.py:19: UserWarning: Module 'speechbrain.pretrained' was deprecated, redirecting to 'speechbrain.inference'. Please update your script. This is a change from SpeechBrain 1.0. See: https://github.com/speechbrain/speechbrain/releases/tag/v1.0.0
+    from speechbrain.pretrained import SpeakerRecognition
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 39 passed, 1 warning in 6.48s ========================
+python : Exception ignored in: <function Console.__del__ at 0x0000028115A51D00>
+At line:1 char:116
++ ... aaa_engine; python -m pytest ../tests/test_layer1.py ../tests/test_sv ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Exception ignor...00028115A51D00>:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Traceback (most recent call last):
+  File "C:\Users\Navadeep 
+Maka\AppData\Local\Programs\Python\Python312\Lib\site-packages\pyreadline3\console\console.py", line 256, in __del__
+OSError: [WinError -1073741816] Windows Error 0xc0000008
