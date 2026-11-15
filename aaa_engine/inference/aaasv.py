@@ -383,6 +383,8 @@ class AAASV:
     def __init__(self, model_dir: str, device: str = "auto") -> None:
         self.model_dir = model_dir
         self._threshold = _DEFAULT_THRESHOLD
+        self._tau_anchor = 0.85
+        self._q_min = 0.70
         self._latency_benchmarked = False
         self.latency_p50_ms: Optional[float] = None
         self.latency_p95_ms: Optional[float] = None
@@ -420,7 +422,12 @@ class AAASV:
             with open(cal_path, "r", encoding="utf-8") as fh:
                 cal = json.load(fh)
             self._threshold = float(cal.get("threshold", _DEFAULT_THRESHOLD))
-            logger.info("Loaded calibration threshold: %.4f", self._threshold)
+            self._tau_anchor = float(cal.get("tau_anchor", 0.85))
+            self._q_min = float(cal.get("q_min", 0.70))
+            logger.info(
+                "Loaded calibration: threshold=%.4f tau_anchor=%.4f q_min=%.4f",
+                self._threshold, self._tau_anchor, self._q_min,
+            )
         except Exception as exc:
             logger.warning("Failed to load calibration.json: %s; using default", exc)
 
@@ -727,7 +734,10 @@ class AAASV:
         Adaptive voiceprint update.
 
         The update fires ONLY when:
-          gates["score"] > 0.85  AND  q > 0.7
+          gates["score"] > self._tau_anchor  AND  q > self._q_min
+
+        Gates are loaded from calibration.json (tau_anchor, q_min).
+        Defaults: tau_anchor=0.85, q_min=0.70.
 
         When updating, the new voiceprint embedding is the L2-normalised
         average of the existing embedding and the new embedding.
@@ -745,7 +755,9 @@ class AAASV:
         Updated (or unchanged) Voiceprint.
         """
         gate_score = float(gates.get("score", 0.0))
-        if gate_score <= 0.85 or q <= 0.7:
+        tau_anchor = getattr(self, "_tau_anchor", 0.85)
+        q_min = getattr(self, "_q_min", 0.70)
+        if gate_score <= tau_anchor or q <= q_min:
             return voiceprint  # gates not satisfied — no update
 
         # Weighted average: weight existing by n_utterances

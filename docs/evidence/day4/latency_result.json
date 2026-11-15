@@ -1,0 +1,13 @@
+{
+  "run_id": "1d0e4470-306f-4631-9e6b-e156d0d40833",
+  "timestamp": "2026-11-15T11:14:00.111018+00:00",
+  "n_warmup": 10,
+  "n_calls": 100,
+  "audio_duration_s": 3.0,
+  "device": "cpu",
+  "model": "stub (no model.pt \u2014 real model not committed)",
+  "latency_p50_ms": 0.0655999974696897,
+  "latency_p95_ms": 0.07137999637052415,
+  "latency_p99_ms": 0.08386699781112841,
+  "note": "Stub model used. Real checkpoint latency will differ (larger model). Run on HPC with model.pt for real numbers."
+}

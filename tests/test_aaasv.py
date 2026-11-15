@@ -75,8 +75,10 @@ class _StubAAASV:
     an unbound call so validation behaviour is identical to the real class.
     """
 
-    def __init__(self, threshold: float = 0.5) -> None:
+    def __init__(self, threshold: float = 0.5, tau_anchor: float = 0.85, q_min: float = 0.70) -> None:
         self._threshold = threshold
+        self._tau_anchor = tau_anchor
+        self._q_min = q_min
         self._rng = np.random.default_rng(0)
 
     # ------------------------------------------------------------------

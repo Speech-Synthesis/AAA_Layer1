@@ -776,11 +776,17 @@ def _is_test_manifest(path: str) -> bool:
 # ===========================================================================
 
 def _build_embedding_fn(ckpt_path: str) -> Callable[[str], np.ndarray]:
-    """Build an embedding function from a checkpoint.
+    """Build an embedding function from a B1 checkpoint saved by train_b1.py.
 
-    Supports loading:
-      - B1 / AAA-SV checkpoints saved with state dict key "model" or "model_state_dict"
-      - Pretrained baseline models via SpeechBrain
+    Checkpoint format (train_b1.py keys):
+        "model"      → ECAPA-TDNN embedding_model state_dict
+        "classifier" → ArcFace head state_dict (not used for inference)
+        "optimizer", "scheduler", "scaler", "rng_state"
+
+    Feature pipeline (matches train_b1.py exactly):
+        torchaudio.MelSpectrogram(sr=16000, n_fft=512, win_length=400,
+            hop_length=160, n_mels=80, f_min=20, f_max=7600)
+        → log → per-utterance MVN → ECAPA_TDNN → 192-dim L2-normalised
     """
     import torch
     import torchaudio
@@ -788,19 +794,6 @@ def _build_embedding_fn(ckpt_path: str) -> Callable[[str], np.ndarray]:
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     from speechbrain.lobes.models.ECAPA_TDNN import ECAPA_TDNN
-
-    # Use torchaudio MelSpectrogram directly — avoids SpeechBrain Fbank
-    # version-dependent output shapes (some versions return [B, n_mels+4, T]).
-    # Matches the feature extraction used in train_b1.py.
-    _mel_transform = torchaudio.transforms.MelSpectrogram(
-        sample_rate=16000,
-        n_fft=512,
-        win_length=400,
-        hop_length=160,
-        n_mels=80,
-        f_min=20,
-        f_max=7600,
-    ).to(device)
 
     model = ECAPA_TDNN(
         input_size=80,
@@ -812,20 +805,30 @@ def _build_embedding_fn(ckpt_path: str) -> Callable[[str], np.ndarray]:
         lin_neurons=192,
     )
 
-    state = torch.load(ckpt_path, map_location=device)
-    if isinstance(state, dict):
-        if "model" in state:
-            state_dict = state["model"]
-        elif "model_state_dict" in state:
-            state_dict = state["model_state_dict"]
-        else:
-            state_dict = state
+    state = torch.load(ckpt_path, map_location=device, weights_only=False)
+    if isinstance(state, dict) and "model" in state:
+        # Standard train_b1.py checkpoint format
+        model.load_state_dict(state["model"], strict=True)
+    elif isinstance(state, dict) and "model_state_dict" in state:
+        model.load_state_dict(state["model_state_dict"], strict=True)
+    elif isinstance(state, dict) and not any(k in state for k in ("model", "model_state_dict", "embedding_model")):
+        # Raw state dict
+        model.load_state_dict(state, strict=False)
     else:
-        state_dict = state
+        model.load_state_dict(state, strict=False)
 
-    model.load_state_dict(state_dict, strict=False)
     model.eval()
     model.to(device)
+
+    _mel_transform = torchaudio.transforms.MelSpectrogram(
+        sample_rate=16000,
+        n_fft=512,
+        win_length=400,
+        hop_length=160,
+        n_mels=80,
+        f_min=20,
+        f_max=7600,
+    ).to(device)
 
     _SAMPLE_RATE = 16000
 
@@ -834,27 +837,26 @@ def _build_embedding_fn(ckpt_path: str) -> Callable[[str], np.ndarray]:
 
         try:
             data, sr = sf.read(wav_path, dtype="float32", always_2d=True)
-            wav = torch.from_numpy(data.T)
+            wav = torch.from_numpy(data.T)  # (channels, samples)
         except Exception:
             wav, sr = torchaudio.load(wav_path)
 
         if wav.shape[0] > 1:
-            wav = wav.mean(dim=0, keepdim=True)
+            wav = wav.mean(dim=0, keepdim=True)  # stereo -> mono
         if sr != _SAMPLE_RATE:
             wav = torchaudio.transforms.Resample(sr, _SAMPLE_RATE)(wav)
         wav = wav.to(device)  # [1, T]
 
         with torch.no_grad():
-            # MelSpectrogram: [1, T] → [1, n_mels, T'] = [1, 80, T']
-            feats = _mel_transform(wav)                    # [1, 80, T']
-            # Log-mel (clamp for numerical stability)
-            feats = torch.clamp(feats, min=1e-9).log()    # [1, 80, T']
-            # Per-utterance mean-variance normalisation over time
+            # MelSpectrogram: [1, T] -> [1, 80, T']
+            feats = _mel_transform(wav)
+            feats = torch.clamp(feats, min=1e-9).log()
+            # Per-utterance MVN over time axis
             mean = feats.mean(dim=2, keepdim=True)
             std = feats.std(dim=2, keepdim=True).clamp(min=1e-9)
-            feats = (feats - mean) / std                   # [1, 80, T']
-            # ECAPA_TDNN forward: expects [batch, n_mels, time] = [1, 80, T']
-            emb = model(feats)                             # [1, 192] or [1, 1, 192]
+            feats = (feats - mean) / std  # [1, 80, T']
+            # ECAPA_TDNN forward: expects [batch, n_mels, time]
+            emb = model(feats)            # [1, 192] or [1, 1, 192]
             if emb.dim() == 3:
                 emb = emb.squeeze(1)
 
